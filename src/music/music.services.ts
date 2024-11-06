@@ -1,9 +1,74 @@
 import * as musicLib from './music.libs';
-import { DownloadQueryTypes, SearchQueryTypes } from './music.types';
+import {
+  DetailsQueryTypes,
+  DiscoverQueryTypes,
+  DownloadQueryTypes,
+  SearchQueryTypes
+} from './music.types';
+import { PLAYLIST_IDS } from './music.utils';
 
 export const getMusic = async (query: SearchQueryTypes) => {
-  const data = await musicLib.searchMusicFromShazam(query.query, query.limit!);
-  return data;
+  let data;
+
+  const limit = query.limit ?? 10;
+  const page = query.page ?? 1;
+  const isPlaylist = !!query.isPlaylist;
+
+  switch (query.platform) {
+    case 'saavn':
+      data = await musicLib.searchSongsFromSaavn(query.query, page, limit);
+      break;
+    case 'yt':
+      if (isPlaylist) {
+        data = await musicLib.getYtVideosByPlaylistId(query.query);
+      } else {
+        data = await musicLib.searchByQueryYt(query.query);
+      }
+      break;
+    case 'shazam':
+      data = await musicLib.searchMusicFromShazam(query.query, limit);
+      break;
+    default:
+      data = await musicLib.searchByQueryYt(query.query);
+  }
+
+  return { data, platform: query.platform ?? 'yt' };
+};
+
+export const getMusicDiscover = async (query: DiscoverQueryTypes) => {
+  const filter = query.filter || null;
+  const platform = query.platform;
+  let data;
+  switch (platform) {
+    case 'saavn':
+      data = await musicLib.discoverSongFromSaavn(filter);
+      break;
+    case 'yt':
+      data = await musicLib.getYtVideosByCategory(filter as keyof typeof PLAYLIST_IDS);
+      break;
+    default:
+      data = await musicLib.getYtVideosByCategory(filter as keyof typeof PLAYLIST_IDS);
+  }
+  return { data, platform: platform };
+};
+
+export const getMusicDetails = async (query: DetailsQueryTypes) => {
+  let data;
+  switch (query.platform) {
+    case 'saavn':
+      data = await musicLib.musicByIdFromSaavn(query.id);
+      break;
+    case 'yt':
+      data = await musicLib.getByYtVideoId(query.id);
+      break;
+    case 'shazam':
+      data = await musicLib.aboutMusicFromShazam(query.id);
+      break;
+    default:
+      // Default to YouTube search if no platform is specified or doesn't match
+      data = await musicLib.getByYtVideoId(query.id);
+  }
+  return { data, platform: query.platform ?? 'yt' };
 };
 
 export const downloadMusic = async (query: DownloadQueryTypes) => {

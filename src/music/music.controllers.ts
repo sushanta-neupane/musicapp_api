@@ -1,7 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
 import { catchAsync } from '../utils/catchAsync';
-import { downloadMusic, getMusic } from './music.services';
-import { DownloadQueryTypes, SearchQueryTypes } from './music.types';
+import { downloadMusic, getMusic, getMusicDetails, getMusicDiscover } from './music.services';
+import {
+  DetailsQueryTypes,
+  DiscoverQueryTypes,
+  DownloadQueryTypes,
+  SearchQueryTypes
+} from './music.types';
 import { sendSuccessRes } from '../utils/formateResponse';
 import { StatusCodes } from 'http-status-codes';
 import ytdl from '@distube/ytdl-core';
@@ -15,6 +20,18 @@ export const musicContSearch = catchAsync(async (req: Request, res: Response) =>
   const query: SearchQueryTypes = req.query as unknown as SearchQueryTypes;
   const data = await getMusic(query);
   return sendSuccessRes(StatusCodes.OK)(res, 'Music fetched')({ data });
+});
+
+export const musicDiscover = catchAsync(async (req: Request, res: Response) => {
+  const query: DiscoverQueryTypes = req.query as unknown as DiscoverQueryTypes;
+  const data = await getMusicDiscover(query);
+  return sendSuccessRes(StatusCodes.OK)(res, 'Music fetched')(data);
+});
+
+export const musicDetails = catchAsync(async (req: Request, res: Response) => {
+  const query: DetailsQueryTypes = req.query as unknown as DetailsQueryTypes;
+  const data = await getMusicDetails(query);
+  return sendSuccessRes(StatusCodes.OK)(res, 'Music fetched')(data);
 });
 
 export const musicContDownload = catchAsync(async (req: Request, res: Response) => {

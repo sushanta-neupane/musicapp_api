@@ -1,7 +1,8 @@
 import { internal } from '@hapi/boom';
 import axios from 'axios';
 import yts from 'yt-search';
-
+import ytdl from '@distube/ytdl-core';
+import { PLAYLIST_IDS } from './music.utils';
 // youtube api
 
 export const searchByQueryYt = async (query: string) => {
@@ -22,9 +23,39 @@ export const getYtVideosByPlaylistId = async (listId: string) => {
   }
 };
 
+export const getYtVideosByCategory = async (category: keyof typeof PLAYLIST_IDS | null) => {
+  if (!category) {
+    throw internal(`Provide category`);
+  }
+  const listId = PLAYLIST_IDS[category];
+
+  if (!listId) {
+    throw internal(`Playlist ID not found for category: ${category}`);
+  }
+
+  try {
+    const response = await getYtVideosByPlaylistId(listId);
+    return response;
+  } catch (error) {
+    throw internal(`Error fetching videos for category ${category}`);
+  }
+};
+
 export const getByYtVideoId = async (videoId: string) => {
   try {
-    const response = await yts({ videoId });
+    const videoInfo = await ytdl.getInfo(videoId);
+
+    const music_url = ytdl.chooseFormat(videoInfo.formats, { quality: 'highestaudio' }).url;
+    const relatedVideos = videoInfo.related_videos;
+    const details = await yts({ videoId }); // Assuming you get additional details from yts
+
+    // Combine the results into one response object
+    const response = {
+      music_url,
+      relatedVideos,
+      details
+    };
+
     return response;
   } catch (error) {
     throw internal('Error on search', error);
@@ -32,53 +63,64 @@ export const getByYtVideoId = async (videoId: string) => {
 };
 
 // saavn api
+
+// Function to handle trending song and albumb from saavn
+export const discoverSongFromSaavn = async (q: string | null) => {
+  const path = `https://jiosaavn-api-sigma-sandy.vercel.app/modules?language=english,hindi`;
+  const saavnData = await axios.get(`${path}`);
+  if (q) {
+    return saavnData.data.data[q];
+  }
+  return saavnData.data.data;
+};
+
 const searchFromSaavn = async (path: string) => {
-  const saavnData = await axios.get(`https://saavn.dev${path}`);
+  const saavnData = await axios.get(`https://jiosaavn-api-privatecvc2.vercel.app${path}`);
   return saavnData.data;
 };
 
 // Function to handle songs search from saavn
 export const searchSongsFromSaavn = async (q: string, page: number, limit: number) => {
-  const path = `/api/search/songs?query=${q}&page=${page}&limit=${limit}`;
+  const path = `/search/songs?query=${q}&page=${page}&limit=${limit}`;
   return await searchFromSaavn(path);
 };
 
 // Function to handle albums search from saavn
 export const searchAlbumsFromSaavn = async (q: string, page: number, limit: number) => {
-  const path = `/api/search/albums?query=${q}&page=${page}&limit=${limit}`;
+  const path = `/search/albums?query=${q}&page=${page}&limit=${limit}`;
   return await searchFromSaavn(path);
 };
 
 // Function to handle playlists search from saavn
 export const searchPlaylistsFromSaavn = async (q: string, page: number, limit: number) => {
-  const path = `/api/search/playlists?query=${q}&page=${page}&limit=${limit}`;
+  const path = `/search/playlists?query=${q}&page=${page}&limit=${limit}`;
   return await searchFromSaavn(path);
 };
 
 // Function to handle artist search from saavn
 export const searchArtistsFromSaavn = async (q: string, page: number, limit: number) => {
-  const path = `/api/search/artists?query=${q}&page=${page}&limit=${limit}`;
+  const path = `/search/artists?query=${q}&page=${page}&limit=${limit}`;
   return await searchFromSaavn(path);
 };
 
 // General search function from saavn
 export const generalSearchFromSaavn = async (q: string, page: number, limit: number) => {
-  const path = `/api/search?query=${q}&page=${page}&limit=${limit}`;
+  const path = `/search?query=${q}&page=${page}&limit=${limit}`;
   return await searchFromSaavn(path);
 };
 
 export const musicByIdFromSaavn = async (id: string) => {
-  const path = `/api/songs/${id}`;
+  const path = `/songs/${id}`;
   return await searchFromSaavn(path);
 };
 
 export const musicLyricsByIdFromSaavn = async (id: string) => {
-  const path = `/api/songs/${id}/lyrics`;
+  const path = `/songs/${id}/lyrics`;
   return await searchFromSaavn(path);
 };
 
 export const musicSuggestionByIdFromSaavn = async (id: string) => {
-  const path = `/api/songs/${id}/suggestions`;
+  const path = `/songs/${id}/suggestions`;
   return await searchFromSaavn(path);
 };
 
@@ -103,6 +145,12 @@ export const searchArtistByIdFromShazam = (id: string) => {
   return searchFromShazam(path);
 };
 
+export const aboutMusicFromShazam = async (id: string) => {
+  const shazamData = await axios.get(
+    `https://www.shazam.com/discovery/v5/en/GB/web/-/track/${id}?shazamapiversion=v3&video=v3`
+  );
+  return shazamData.data;
+};
 export const getRelatedSongsFromShazam = async (id: string, limit: number) => {
   const shazamData = await axios.get(
     `https://cdn.shazam.com/shazam/v3/en-US/GB/web/-/tracks/track-similarities-id-${id}?startFrom=0&pageSize=${limit}&connected=&channel=`
