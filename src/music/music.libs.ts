@@ -149,6 +149,8 @@ export const aboutMusicFromShazam = async (id: string) => {
   const shazamData = await axios.get(
     `https://www.shazam.com/discovery/v5/en/GB/web/-/track/${id}?shazamapiversion=v3&video=v3`
   );
+  const relatedVideos = await axios.get(shazamData.data.relatedtracksurl);
+  shazamData.data.relatedVideos = relatedVideos.data.tracks;
   return shazamData.data;
 };
 export const getRelatedSongsFromShazam = async (id: string, limit: number) => {

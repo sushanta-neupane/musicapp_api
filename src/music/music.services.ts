@@ -12,7 +12,7 @@ export const getMusic = async (query: SearchQueryTypes) => {
 
   const limit = query.limit ?? 10;
   const page = query.page ?? 1;
-  const isPlaylist = !!query.isPlaylist;
+  const isPlaylist = query.isPlaylist === 'true';
 
   switch (query.platform) {
     case 'saavn':
@@ -65,7 +65,6 @@ export const getMusicDetails = async (query: DetailsQueryTypes) => {
       data = await musicLib.aboutMusicFromShazam(query.id);
       break;
     default:
-      // Default to YouTube search if no platform is specified or doesn't match
       data = await musicLib.getByYtVideoId(query.id);
   }
   return { data, platform: query.platform ?? 'yt' };

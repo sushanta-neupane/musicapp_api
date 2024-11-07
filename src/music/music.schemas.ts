@@ -12,12 +12,14 @@ export const MusicQuerySchema = Joi.object({
     .optional()
 });
 export const DiscoverQuerySchema = Joi.object({
-  filter: Joi.string().valid(music_filters).optional(),
+  filter: Joi.string()
+    .valid(...music_filters)
+    .optional(),
   platform: Joi.string().valid(...Object.keys(availablePlatform))
 });
 
 export const DetailsQuerySchema = Joi.object({
-  platform: Joi.string().valid('saavn', 'shazam', 'yt'),
+  platform: Joi.string().valid(...Object.keys(availablePlatform)),
   id: Joi.string()
 });
 
