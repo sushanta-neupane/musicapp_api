@@ -24,7 +24,6 @@ export const DetailsQuerySchema = Joi.object({
 });
 
 export const DownloadQuerySchema = Joi.object({
-  query: Joi.string().required(),
-  id: Joi.string().optional(),
-  type: Joi.string().required()
+  id: Joi.string().required(),
+  platform: Joi.string().required()
 });

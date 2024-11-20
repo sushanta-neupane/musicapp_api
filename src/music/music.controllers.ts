@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { catchAsync } from '../utils/catchAsync';
-import { downloadMusic, getMusic, getMusicDetails, getMusicDiscover } from './music.services';
+import { getMusic, getMusicDetails, getMusicDiscover } from './music.services';
 import {
   DetailsQueryTypes,
   DiscoverQueryTypes,
@@ -15,6 +15,8 @@ import fs from 'fs';
 import path from 'path';
 // @ts-ignore
 import { Shazam } from 'node-shazam';
+import axios from 'axios';
+import https from 'https';
 
 export const musicContSearch = catchAsync(async (req: Request, res: Response) => {
   const query: SearchQueryTypes = req.query as unknown as SearchQueryTypes;
@@ -36,14 +38,13 @@ export const musicDetails = catchAsync(async (req: Request, res: Response) => {
 
 export const musicContDownload = catchAsync(async (req: Request, res: Response) => {
   const query: DownloadQueryTypes = req.query as unknown as DownloadQueryTypes;
-  const videoData = req.videoInfo;
-
-  res.setHeader('Content-Disposition', `attachment; filename="${videoData?.title}.mp4"`);
-  res.setHeader('Content-Type', 'video/mp4');
-
-  ytdl(query.query!, { filter: (formate) => formate.hasAudio }).pipe(res);
-
-  // return sendSuccessRes(StatusCodes.OK)(res, 'Music Downloaded')({ videoData });
+  const info = await ytdl.getInfo(query.id);
+  const fileName = `${info.videoDetails.title.replace(/[^\w\s]/gi, '')}.webm`;
+  const audioFormats = ytdl.filterFormats(info.formats, 'audioonly');
+  const bestAudioFormat = audioFormats[0];
+  res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+  res.setHeader('Content-Type', 'audio/webm');
+  ytdl(query.id, { format: bestAudioFormat }).pipe(res);
 });
 
 export const musicContRecognise = catchAsync(
@@ -54,8 +55,6 @@ export const musicContRecognise = catchAsync(
       return res.status(400).json({ message: 'No file or file path provided.' });
     }
     const tempFilePath = req.file.path;
-    // const tempFilePath = path.join(__dirname, 'test.mp3');
-    console.log(tempFilePath);
 
     console.log(`Processing file at: ${tempFilePath}`);
 
@@ -68,7 +67,6 @@ export const musicContRecognise = catchAsync(
       // Initialize Shazam API and recognize the song
       const shazam = new Shazam();
       const songData = await shazam.recognise(tempFilePath, 'en-US');
-      console.log(songData);
       // Return the recognized song data to the frontend
       res.json({ songData });
     } catch (error) {
@@ -78,7 +76,7 @@ export const musicContRecognise = catchAsync(
       // Optionally clean up temp files
       try {
         if (fs.existsSync(tempFilePath)) {
-          // fs.unlinkSync(tempFilePath);
+          fs.unlinkSync(tempFilePath);
           // Delete the temp file after processing
         }
       } catch (cleanupError) {

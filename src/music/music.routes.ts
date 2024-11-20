@@ -8,7 +8,6 @@ import {
 } from './music.controllers';
 
 import * as queryValidator from './music.validators';
-import { downloadHandller } from './music.middleware';
 import { upload } from '../middlewares/upload';
 
 const router = Router();
@@ -23,7 +22,7 @@ router.get('/details/:id', queryValidator.queryDetailsValidator, musicDetails);
 router.get('/discover', queryValidator.queryDiscoverValidator, musicDiscover);
 
 // GET /api/music/download
-router.get('/download', queryValidator.queryDownloadValidator, downloadHandller, musicContDownload);
+router.get('/download', queryValidator.queryDownloadValidator, musicContDownload);
 
 // GET /api/music/recognise
 router.post('/recognise', upload.single('voice'), musicContRecognise);

@@ -16,9 +16,8 @@ export interface DetailsQueryTypes {
 }
 
 export interface DownloadQueryTypes {
-  query?: string;
-  id?: string;
-  type?: string;
+  id: string;
+  platform: string;
 }
 
 export interface YtOutputTypes {

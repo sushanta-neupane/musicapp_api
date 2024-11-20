@@ -3,6 +3,7 @@ import axios from 'axios';
 import yts from 'yt-search';
 import ytdl from '@distube/ytdl-core';
 import { PLAYLIST_IDS } from './music.utils';
+import { playlist_info } from 'play-dl';
 // youtube api
 
 export const searchByQueryYt = async (query: string) => {
@@ -16,8 +17,15 @@ export const searchByQueryYt = async (query: string) => {
 
 export const getYtVideosByPlaylistId = async (listId: string) => {
   try {
-    const response = await yts({ listId });
-    return response;
+    const videoInfo = await playlist_info(listId);
+    await videoInfo.fetch();
+    const playlistInfo = {
+      playlistThumbnail: videoInfo.thumbnail,
+      playlistName: videoInfo.title,
+      count: videoInfo.total_pages
+    };
+    const allVideos = await videoInfo.all_videos();
+    return { allVideos, playlistInfo };
   } catch (error) {
     throw internal('Error on search', error);
   }
@@ -75,7 +83,8 @@ export const discoverSongFromSaavn = async (q: string | null) => {
 };
 
 const searchFromSaavn = async (path: string) => {
-  const saavnData = await axios.get(`https://jiosaavn-api-privatecvc2.vercel.app${path}`);
+  const saavnData = await axios.get(`https://saavn.dev/api${path}`);
+  console.log(`https://saavn.dev/api${path}`);
   return saavnData.data;
 };
 
@@ -146,16 +155,36 @@ export const searchArtistByIdFromShazam = (id: string) => {
 };
 
 export const aboutMusicFromShazam = async (id: string) => {
-  const shazamData = await axios.get(
-    `https://www.shazam.com/discovery/v5/en/GB/web/-/track/${id}?shazamapiversion=v3&video=v3`
-  );
-  const relatedVideos = await axios.get(shazamData.data.relatedtracksurl);
-  shazamData.data.relatedVideos = relatedVideos.data.tracks;
-  return shazamData.data;
+  try {
+    // Make the two requests concurrently
+    const [shazamResponse, related_videos] = await Promise.all([
+      axios.get(
+        `https://www.shazam.com/discovery/v5/en/GB/web/-/track/${id}?shazamapiversion=v3&video=v3`
+      ),
+      getRelatedSongsFromShazam(id)
+    ]);
+    const relatedVideos = related_videos.tracks;
+
+    // Add the related videos to the main Shazam data
+    return {
+      ...shazamResponse.data,
+      relatedVideos
+    };
+  } catch (error) {
+    console.error('Error fetching Shazam data:', error);
+    throw new Error('Failed to fetch Shazam music data');
+  }
 };
-export const getRelatedSongsFromShazam = async (id: string, limit: number) => {
-  const shazamData = await axios.get(
-    `https://cdn.shazam.com/shazam/v3/en-US/GB/web/-/tracks/track-similarities-id-${id}?startFrom=0&pageSize=${limit}&connected=&channel=`
-  );
-  return shazamData.data;
+
+export const getRelatedSongsFromShazam = async (id: string, limit = 50) => {
+  try {
+    const shazamData = await axios.get(
+      `https://cdn.shazam.com/shazam/v3/en-US/GB/web/-/tracks/track-similarities-id-${id}?startFrom=0&pageSize=${limit}&connected=&channel=`
+    );
+    // Returning only the relevant data to avoid unnecessary details
+    return shazamData.data || [];
+  } catch (error) {
+    console.error('Error fetching related songs from Shazam:', error);
+    throw new Error('Failed to fetch related songs');
+  }
 };

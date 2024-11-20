@@ -2,7 +2,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 // Set up storage for uploaded files
-const storage = multer.diskStorage({
+const storageConf = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = path.join(__dirname, '../uploads');
 
@@ -20,4 +20,6 @@ const storage = multer.diskStorage({
 });
 
 // Middleware setup for multer
-export const upload = multer({ storage });
+export const upload = multer({ storage: storageConf });
+
+export const uploadImg = multer({ storage: multer.memoryStorage() });

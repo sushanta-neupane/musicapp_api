@@ -1,9 +1,15 @@
-import { YtOutputTypes } from '../music/music.types';
+import { User } from '@prisma/client';
 
 declare global {
   namespace Express {
     export interface Request {
-      videoInfo?: YtOutputTypes;
+      decoded?: User;
+      undecoded?: User;
+      images?: [];
+      uploadDir?: string;
+      allowGuest?: true;
+      email?: string;
+      auth?: { userId: string | null; sessionId: string | null };
     }
   }
 }

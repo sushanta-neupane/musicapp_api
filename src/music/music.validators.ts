@@ -17,7 +17,7 @@ import {
 export const querySearchValidator = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     const query = req.query as unknown as SearchQueryTypes;
-    query.page = Number(query.page) | 5;
+    query.page = Number(query.page) | 1;
     query.limit = Number(query.limit) | 20;
     await validate<SearchQueryTypes>(query, MusicQuerySchema);
 
