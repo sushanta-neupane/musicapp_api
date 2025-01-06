@@ -4,6 +4,8 @@ import yts from 'yt-search';
 import ytdl from '@distube/ytdl-core';
 import { PLAYLIST_IDS } from './music.utils';
 import { playlist_info } from 'play-dl';
+import { cookies } from '../cookies/cookies';
+import youtubedl, { Payload } from 'youtube-dl-exec';
 // youtube api
 
 export const searchByQueryYt = async (query: string) => {
@@ -51,11 +53,25 @@ export const getYtVideosByCategory = async (category: keyof typeof PLAYLIST_IDS 
 
 export const getByYtVideoId = async (videoId: string) => {
   try {
-    const videoInfo = await ytdl.getInfo(videoId);
+    const agent = ytdl.createAgent(cookies);
 
-    const music_url = ytdl.chooseFormat(videoInfo.formats, { quality: 'highestaudio' }).url;
+    const videoInfo = await ytdl.getInfo(videoId, { agent: agent });
+
+    // const music_url = ytdl.chooseFormat(videoInfo.formats, { quality: 'highestaudio' }).url;
+
+    const music = (await youtubedl(`https://www.youtube.com/watch?v=${videoId}`, {
+      dumpSingleJson: true,
+      noCheckCertificates: true,
+      noWarnings: true,
+      preferFreeFormats: true,
+      extractAudio: true,
+      addHeader: ['referer:youtube.com', 'user-agent:googlebot']
+    })) as any;
+
+    const music_url = music?.url;
+
     const relatedVideos = videoInfo.related_videos;
-    const details = await yts({ videoId }); // Assuming you get additional details from yts
+    const details = await yts({ videoId });
 
     // Combine the results into one response object
     const response = {

@@ -17,6 +17,7 @@ export const getMusic = async (query: SearchQueryTypes) => {
   switch (query.platform) {
     case 'saavn':
       data = await musicLib.searchSongsFromSaavn(query.query, page, limit);
+      data = data.data.results;
       break;
     case 'yt':
       if (isPlaylist) {
@@ -27,12 +28,14 @@ export const getMusic = async (query: SearchQueryTypes) => {
       break;
     case 'shazam':
       data = await musicLib.searchMusicFromShazam(query.query, limit);
+      data = data.tracks;
+
       break;
     default:
       data = await musicLib.searchByQueryYt(query.query);
   }
 
-  return { data, platform: query.platform ?? 'yt' };
+  return { results: data, platform: query.platform ?? 'yt' };
 };
 
 export const getMusicDiscover = async (query: DiscoverQueryTypes) => {
@@ -57,6 +60,7 @@ export const getMusicDetails = async (query: DetailsQueryTypes) => {
   switch (query.platform) {
     case 'saavn':
       data = await musicLib.musicByIdFromSaavn(query.id);
+      data = data.data;
       break;
     case 'yt':
       data = await musicLib.getByYtVideoId(query.id);
@@ -67,7 +71,7 @@ export const getMusicDetails = async (query: DetailsQueryTypes) => {
     default:
       data = await musicLib.getByYtVideoId(query.id);
   }
-  return { data, platform: query.platform ?? 'yt' };
+  return { results: data, platform: query.platform ?? 'yt' };
 };
 
 export const downloadMusic = async (query: DownloadQueryTypes) => {

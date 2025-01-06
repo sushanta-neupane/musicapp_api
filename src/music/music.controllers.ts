@@ -21,7 +21,7 @@ import https from 'https';
 export const musicContSearch = catchAsync(async (req: Request, res: Response) => {
   const query: SearchQueryTypes = req.query as unknown as SearchQueryTypes;
   const data = await getMusic(query);
-  return sendSuccessRes(StatusCodes.OK)(res, 'Music fetched')({ data });
+  return sendSuccessRes(StatusCodes.OK)(res, 'Music fetched')(data);
 });
 
 export const musicDiscover = catchAsync(async (req: Request, res: Response) => {

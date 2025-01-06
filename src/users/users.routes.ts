@@ -54,8 +54,8 @@ router.get(
   controllers.userContCheckUsernameAvailability
 );
 
-// GET /api/users/verify-email/initiate
-router.get(
+// POST /api/users/verify-email/initiate
+router.post(
   '/verify-email/initiate',
   verifyToken,
   checkIsEmailVerified(true),
