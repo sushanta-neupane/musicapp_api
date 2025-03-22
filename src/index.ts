@@ -5,13 +5,14 @@ import { router } from './root.routes';
 import dotenv from 'dotenv';
 import json from './middlewares/json';
 import cookieParser from 'cookie-parser';
-// import fs from 'fs';
+import fs from 'fs';
 import './types/global.request';
-// import https from 'https';
+
+import https from 'https';
 
 export const app = express();
 
-// app.use('/static', express.static(path.join(__dirname, '..', 'public')));
+app.use('/static', express.static(path.join(__dirname, '..', 'public')));
 app.use(cookieParser());
 app.use(
   cors({
@@ -35,18 +36,17 @@ app.use(json);
 
 app.use('/api', router);
 
-// let PORT = parseInt(process.env.APP_PORT || '8000');
-// const HOST = process.env.APP_HOST || 'localhost';
-// if (process.env.NODE_ENV === 'test') {
-//   PORT = parseInt(process.env.TEST_APP_PORT || '8000');
-// }
+let PORT = parseInt(process.env.APP_PORT || '8000');
+const HOST = process.env.APP_HOST || 'localhost';
+if (process.env.NODE_ENV === 'test') {
+  PORT = parseInt(process.env.TEST_APP_PORT || '8000');
+}
 
-// const sslOptions = {
-//   key: fs.readFileSync('localhost-key.pem'),
-//   cert: fs.readFileSync('localhost.pem')
-// };
+const sslOptions = {
+  key: fs.readFileSync('localhost-key.pem'),
+  cert: fs.readFileSync('localhost.pem')
+};
 
-// https.createServer(sslOptions, app).listen(PORT, HOST, () => {
-//   console.log(`Secure server running at https://${HOST}:${PORT}`);
-// });
-export default app;
+https.createServer(sslOptions, app).listen(PORT, HOST, () => {
+  console.log(`Secure server running at https://${HOST}:${PORT}`);
+});
